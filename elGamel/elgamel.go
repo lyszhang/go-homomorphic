@@ -114,3 +114,7 @@ func valint(a []byte)(i int) {
 	if (len(a)==4) { i=(int(a[0])<<24)+ int(a[1])<<16+int(a[2])<<8+int(a[3])}
 	return
 }
+
+func Valint(a []byte)(i int) {
+	return valint(a)
+}
