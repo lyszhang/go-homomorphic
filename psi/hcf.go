@@ -12,25 +12,38 @@ import "fmt"
 // 系数排列从低到高
 // 例如 x^2+3x+5
 // Data = 5，3，1
-type VectorFloat64 struct {
-	Data []float64
+type VectorInt64 struct {
+	Data []int64
 }
 
-func NewFromVectorInt(vi *Vector) *VectorFloat64 {
-	var t VectorFloat64
+func NewFromVectorInt(vi *Vector) *VectorInt64 {
+	var t VectorInt64
 	for _, value := range vi.Data {
-		t.Data = append(t.Data, float64(value))
+		t.Data = append(t.Data, int64(value))
 	}
 	return &t
 }
 
 // 多项式打印
-func (v *VectorFloat64) print() {
-	fmt.Println(v)
+func (v *VectorInt64) print() {
+	fmt.Println(v.string())
+}
+
+// 多项式打印
+func (v *VectorInt64) string() string {
+	var str string
+	for i, value := range v.Data {
+		if i == 0 {
+			str = fmt.Sprintf("%d ", value)
+			continue
+		}
+		str += fmt.Sprintf("+ %d x^%d", value, i)
+	}
+	return str
 }
 
 // 多项式阶数，移除高阶系数为0
-func (v *VectorFloat64) reduce() {
+func (v *VectorInt64) reduce() {
 	if len(v.Data) == 0 {
 		return
 	}
@@ -46,7 +59,7 @@ func (v *VectorFloat64) reduce() {
 }
 
 // 多项式阶数
-func (v *VectorFloat64) degree() uint {
+func (v *VectorInt64) degree() uint {
 	// 先做降阶处理
 	v.reduce()
 	if len(v.Data) == 0 {
@@ -58,12 +71,12 @@ func (v *VectorFloat64) degree() uint {
 // v - d
 // f阶数大于等于divsor的阶数
 // 多项式相减
-func (v *VectorFloat64) sub(d *VectorFloat64) *VectorFloat64 {
+func (v *VectorInt64) sub(d *VectorInt64) *VectorInt64 {
 	if v.degree() < d.degree() {
 		panic("v degree lower than d")
 	}
 
-	var tmp []float64
+	var tmp []int64
 	for i, _ := range v.Data {
 		if i < len(d.Data) {
 			tmp = append(tmp, v.Data[i]-d.Data[i])
@@ -72,25 +85,25 @@ func (v *VectorFloat64) sub(d *VectorFloat64) *VectorFloat64 {
 		}
 	}
 
-	rem := &VectorFloat64{Data: tmp}
+	rem := &VectorInt64{Data: tmp}
 	rem.reduce()
 	return rem
 }
 
 // v*d
 // 多项式系数乘上常数
-func (v *VectorFloat64) mulConst(d float64, rshift uint) *VectorFloat64 {
-	tmp := make([]float64, rshift)
+func (v *VectorInt64) mulConst(d int64, rshift uint) *VectorInt64 {
+	tmp := make([]int64, rshift)
 	for i := 0; i < len(v.Data); i++ {
 		tmp = append(tmp, v.Data[i]*d)
 	}
-	mul := &VectorFloat64{Data: tmp}
+	mul := &VectorInt64{Data: tmp}
 	mul.reduce()
 	return mul
 }
 
 // 求最高阶系数
-func (v *VectorFloat64) largestParameter() float64 {
+func (v *VectorInt64) largestParameter() int64 {
 	if len(v.Data) == 0 {
 		panic(1)
 	}
@@ -105,7 +118,7 @@ func (v *VectorFloat64) largestParameter() float64 {
 // v/divsor
 // v阶数大于等于divsor的阶数
 // 多项式相除，返回余数多项式
-func (v *VectorFloat64) divide(d *VectorFloat64) (rem, divsor *VectorFloat64) {
+func (v *VectorInt64) divide(d *VectorInt64) (rem, divsor *VectorInt64) {
 	// f阶数大于等于divsor的阶数
 	x := v.largestParameter()
 	y := d.largestParameter()
@@ -124,7 +137,7 @@ func (v *VectorFloat64) divide(d *VectorFloat64) (rem, divsor *VectorFloat64) {
 	return
 }
 
-func (v *VectorFloat64) isZero() bool {
+func (v *VectorInt64) isZero() bool {
 	v.reduce()
 	if (len(v.Data) == 1 && v.Data[0] == 0) || (len(v.Data) == 0) {
 		return true
@@ -132,9 +145,9 @@ func (v *VectorFloat64) isZero() bool {
 	return false
 }
 
-func HCF(m, n *VectorFloat64) *VectorFloat64 {
-	var maxV, minV *VectorFloat64
-	var t1, t2 *VectorFloat64
+func HCF(m, n *VectorInt64) *VectorInt64 {
+	var maxV, minV *VectorInt64
+	var t1, t2 *VectorInt64
 	t1 = m
 	t2 = n
 

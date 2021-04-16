@@ -13,6 +13,7 @@ import (
 	"github.com/renproject/secp256k1"
 	"github.com/renproject/shamir/eea"
 	"github.com/renproject/shamir/poly"
+	"math/big"
 )
 
 // 验证是否为其中的解
@@ -45,15 +46,16 @@ func SearchMatchSolutionSet(p poly.Poly, v []int64) []int64 {
 }
 
 // 验证是否为其中的解
-func CheckPolyMatchSolutionNew(p *VectorFloat64, s float64) bool {
-	var spow, sum float64
+func CheckPolyMatchSolutionNew(p *VectorInt64, s int64) bool {
+	var spow, sum int64
 	for i := 0; i < len(p.Data); i++ {
 		if i == 0 {
 			spow = 1
 		} else {
 			spow = spow * s
 		}
-		sum += p.Data[i] * spow
+		mul := p.Data[i] * spow
+		sum = sum + mul
 	}
 	if sum == 0 {
 		return true
@@ -61,12 +63,38 @@ func CheckPolyMatchSolutionNew(p *VectorFloat64, s float64) bool {
 	return false
 }
 
-func SearchMatchSolutionSetNew(p *VectorFloat64, v []int64) []int64 {
+const INT64LIMIT = "9223372036854775808"
+
+func CheckPolyMatchSolutionNew2(p *VectorInt64, s int64) bool {
+	spow := big.NewInt(1)
+	sum := big.NewInt(0)
+	sbig := big.NewInt(s)
+
+	for i := 0; i < len(p.Data); i++ {
+		if i > 0 {
+			spow = big.NewInt(0).Mul(spow, sbig)
+		}
+
+		pdbig := big.NewInt(p.Data[i])
+		mulbig := big.NewInt(0).Mul(pdbig, spow)
+		sum = big.NewInt(0).Add(sum, mulbig)
+	}
+	fmt.Println("sum: ", sum)
+	int64Limit, _ := big.NewInt(0).SetString(INT64LIMIT, 10)
+	rem := big.NewInt(0).Mod(sum, int64Limit)
+	if big.NewInt(0).Cmp(rem) == 0 {
+		return true
+	}
+
+	return false
+}
+
+func SearchMatchSolutionSetNew(p *VectorInt64, v []int64) []int64 {
+	p.print()
 	var inter []int64
 	for _, value := range v {
-		neg := float64(0 - value)
-		fmt.Println("neg: ", neg)
-		if CheckPolyMatchSolutionNew(p, neg) == true {
+		neg := int64(0 - value)
+		if CheckPolyMatchSolutionNew2(p, neg) == true {
 			inter = append(inter, value)
 		}
 	}
@@ -109,20 +137,6 @@ func Process(aliceSet, bobSet []int64) {
 	finalVector.Print()
 
 	// 公因式
-	// 有个限制, a的degree需要小于b的degree, 否则会报错
-	// (x+1)(x+2)(x+3)
-	// (x+1)(x+2)(x+4)
-	//a := poly.NewFromSlice([]secp256k1.Fn{secp256k1.NewFnFromU32(2),
-	//	secp256k1.NewFnFromU32(3), secp256k1.NewFnFromU32(1)})
-	//b := poly.NewFromSlice([]secp256k1.Fn{secp256k1.NewFnFromU32(42),
-	//	secp256k1.NewFnFromU32(83),
-	//	secp256k1.NewFnFromU32(53), secp256k1.NewFnFromU32(13), secp256k1.NewFnFromU32(1)})
-	//a := newPolyFromVector(&AliceVector)
-	//b := newPolyFromVector(&BobVector)
-	//poly, _ := eea.Trial(a, b)
-	//
-	//inter := SearchMatchSolutionSet(poly, AliceSet)
-	//fmt.Println("intersection:", inter)
 	a := NewFromVectorInt(&AliceVector)
 	b := NewFromVectorInt(&BobVector)
 	poly := HCF(a, b)
@@ -157,6 +171,3 @@ func ProcessPoly() {
 	eea.Trial(a, b)
 
 }
-
-// 两边的阶数必须是不一样的，否则结果有问题
-// 目前只能支持统一的正数

@@ -148,16 +148,6 @@ func (g *EncVector) Mul(f *Vector, privKey *paillier.PrivateKey) {
 
 			mulCipher := paillier.Mul(&privKey.PublicKey, g.Value(i-j), fBigBytes)
 			cipherTmp = paillier.AddCipher(&privKey.PublicKey, mulCipher, cipherTmp)
-
-			//plain, _ := paillier.Decrypt(privKey, cipherTmp)
-			//plainText := new(big.Int).SetBytes(plain)
-			//
-			//plaing, _ := paillier.Decrypt(privKey, g.Value(i-j))
-			//plainTextg := new(big.Int).SetBytes(plaing)
-			//fmt.Println("f: ", f.Value(j))
-			//fmt.Println("g ", plainTextg.Int64())
-			//
-			//fmt.Printf("i: %d, j: %d, cipher: %d\n", i, j, plainText.Int64())
 		}
 		encs = append(encs, cipherTmp)
 	}
