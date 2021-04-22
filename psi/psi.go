@@ -124,13 +124,13 @@ func Process(aliceSet, bobSet []int64) {
 	BobVector.Print()
 
 	// encrypt
-	encALice := AliceVector.Encrypt(privKey)
-	encBob := BobVector.Encrypt(privKey)
+	encALice := AliceVector.Encrypt(&privKey.PublicKey)
+	encBob := BobVector.Encrypt(&privKey.PublicKey)
 
 	// E(f*r+g)
 	///TODO: 验证有效性
-	encALice.Mul(&RandVector, privKey)
-	encALice.Add(encBob, privKey)
+	encALice.Mul(&RandVector, &privKey.PublicKey)
+	encALice.Add(encBob, &privKey.PublicKey)
 
 	// decrypt
 	finalVector := encALice.Decrypt(privKey)

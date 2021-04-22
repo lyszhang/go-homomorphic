@@ -59,13 +59,13 @@ func (v *Vector) Value(i int) int64 {
 }
 
 // 加密
-func (v *Vector) Encrypt(privKey *paillier.PrivateKey) *EncVector {
+func (v *Vector) Encrypt(pubKey *paillier.PublicKey) *EncVector {
 	tmpEnc := make([][]byte, 0)
 	for _, value := range v.Data {
 		mValue := new(big.Int).SetInt64(value)
 
 		///TODO: big int负数问题
-		eValue, err := paillier.Encrypt(&privKey.PublicKey, mValue.Bytes())
+		eValue, err := paillier.Encrypt(pubKey, mValue.Bytes())
 		if err != nil {
 			fmt.Println(err)
 			panic(nil)
@@ -73,7 +73,7 @@ func (v *Vector) Encrypt(privKey *paillier.PrivateKey) *EncVector {
 		tmpEnc = append(tmpEnc, eValue)
 	}
 	return &EncVector{
-		PubKey:    privKey.PublicKey,
+		PubKey:    *pubKey,
 		Encrypted: tmpEnc,
 	}
 }
@@ -111,21 +111,21 @@ func (v *EncVector) Value(i int) []byte {
 // 加法
 // E(h) = E(f+g)
 // f,g皆为多项式密文
-func (g *EncVector) Add(f *EncVector, privKey *paillier.PrivateKey) {
+func (g *EncVector) Add(f *EncVector, pubKey *paillier.PublicKey) {
 	lenG := len(g.Encrypted)
 	lenF := len(f.Encrypted)
 
 	if lenF <= lenG {
 		for i := 0; i < lenG; i++ {
 			if i < lenF {
-				g.Encrypted[i] = paillier.AddCipher(&privKey.PublicKey, g.Encrypted[i], f.Encrypted[i])
+				g.Encrypted[i] = paillier.AddCipher(pubKey, g.Encrypted[i], f.Encrypted[i])
 			}
 		}
 		return
 	} else {
 		for i := 0; i < lenF; i++ {
 			if i < lenG {
-				g.Encrypted[i] = paillier.AddCipher(&privKey.PublicKey, g.Encrypted[i], f.Encrypted[i])
+				g.Encrypted[i] = paillier.AddCipher(pubKey, g.Encrypted[i], f.Encrypted[i])
 			} else {
 				g.Encrypted = append(g.Encrypted, f.Encrypted[i])
 			}
@@ -137,17 +137,17 @@ func (g *EncVector) Add(f *EncVector, privKey *paillier.PrivateKey) {
 // 乘法
 // E(h) = E(f*g)
 // g为多项式密文, f为多项式明文
-func (g *EncVector) Mul(f *Vector, privKey *paillier.PrivateKey) {
+func (g *EncVector) Mul(f *Vector, pubkey *paillier.PublicKey) {
 	limit := len(g.Encrypted) + len(f.Data) - 1
 	// TODO: limit checker
 	var encs [][]byte
 	for i := 0; i < limit; i++ {
-		cipherTmp, _ := paillier.Encrypt(&privKey.PublicKey, big.NewInt(0).Bytes())
+		cipherTmp, _ := paillier.Encrypt(pubkey, big.NewInt(0).Bytes())
 		for j := 0; j <= i; j++ {
 			fBigBytes := big.NewInt(f.Value(j)).Bytes()
 
-			mulCipher := paillier.Mul(&privKey.PublicKey, g.Value(i-j), fBigBytes)
-			cipherTmp = paillier.AddCipher(&privKey.PublicKey, mulCipher, cipherTmp)
+			mulCipher := paillier.Mul(pubkey, g.Value(i-j), fBigBytes)
+			cipherTmp = paillier.AddCipher(pubkey, mulCipher, cipherTmp)
 		}
 		encs = append(encs, cipherTmp)
 	}
