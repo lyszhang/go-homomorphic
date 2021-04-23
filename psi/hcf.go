@@ -83,8 +83,6 @@ func (v *VectorBigInt) sub(d *VectorBigInt) *VectorBigInt {
 	var tmp []*big.Int
 	for i, _ := range v.Data {
 		if i < len(d.Data) {
-			fmt.Println("v", v.Data[i])
-			fmt.Println("d", d.Data[i])
 			tmp = append(tmp, big.NewInt(0).Sub(v.Data[i], d.Data[i]))
 		} else {
 			tmp = append(tmp, v.Data[i])
@@ -99,7 +97,6 @@ func (v *VectorBigInt) sub(d *VectorBigInt) *VectorBigInt {
 // v*d
 // 多项式系数乘上常数
 func (v *VectorBigInt) mulConst(d *big.Int, rshift uint) *VectorBigInt {
-	fmt.Println("rshift: ", rshift)
 	tmp := make([]*big.Int, rshift)
 	for i, _ := range tmp {
 		tmp[i] = big.NewInt(0)
@@ -108,7 +105,6 @@ func (v *VectorBigInt) mulConst(d *big.Int, rshift uint) *VectorBigInt {
 	for i := 0; i < len(v.Data); i++ {
 		tmp = append(tmp, big.NewInt(0).Mul(v.Data[i], d))
 	}
-	fmt.Println(tmp)
 	mul := &VectorBigInt{Data: tmp}
 	mul.reduce()
 	return mul
@@ -134,24 +130,14 @@ func (v *VectorBigInt) divide(d *VectorBigInt) (rem, divsor *VectorBigInt) {
 	// f阶数大于等于divsor的阶数
 	x := v.largestParameter()
 	y := d.largestParameter()
-	fmt.Println("+++++++++")
-	v.print()
-	d.print()
-	fmt.Println("x: ", x)
-	fmt.Println("y: ", y)
 
+	// 最小公倍数
 	_, xa, ya := utils.Lcm(x, y)
-	///// 为什么出现负数的情况
-	//fmt.Println("xa", xa)
-	//fmt.Println("ya", ya)
 
 	// you know why, avoid float missing precision
 	t1 := v.mulConst(xa, 0)
 	t2 := d.mulConst(ya, 0)
 
-	/// 为什么出现负数的情况
-	fmt.Println(t1.degree())
-	fmt.Println(t2.degree())
 	t3 := t2.mulConst(big.NewInt(1), t1.degree()-t2.degree())
 	rem = t1.sub(t3)
 	rem.reduce()
@@ -183,14 +169,14 @@ func HCF(m, n *VectorBigInt) *VectorBigInt {
 			minV = t1
 		}
 		//fmt.Println("++++++++++")
-		maxV.print()
-		minV.print()
+		//maxV.print()
+		//minV.print()
 
 		rem, disvor := maxV.divide(minV)
 		//rem.print()
 		//disvor.print()
 		if rem.isZero() {
-			minV.print()
+			//minV.print()
 			return minV
 		}
 
