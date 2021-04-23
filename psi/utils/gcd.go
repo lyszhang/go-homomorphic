@@ -6,29 +6,27 @@
 
 package utils
 
-import "fmt"
+import (
+	"math/big"
+)
 
-func Gcd(a, b int64) int64 {
-	if a < 0 {
-		a = -a
-	}
-	if b < 0 {
-		b = -b
-	}
+func Gcd(a, b *big.Int) *big.Int {
+	a = big.NewInt(0).Abs(a)
+	b = big.NewInt(0).Abs(b)
 
-	if a < b {
+	if a.Cmp(b) < 0 {
 		a, b = b, a
 	}
-	if b == 0 {
+	if b.Cmp(big.NewInt(0)) == 0 {
 		return a
 	} else {
-		return Gcd(b, a%b)
+		return Gcd(b, big.NewInt(0).Mod(a, b))
 	}
 }
 
 // 最小公倍数， 及各自相差倍数
-func Lcm(a, b int64) (int64, int64, int64) {
+func Lcm(a, b *big.Int) (*big.Int, *big.Int, *big.Int) {
 	g := Gcd(a, b)
-	fmt.Println(g)
-	return (a / g) * b, b / g, a / g
+	div := big.NewInt(0).Div(a, g)
+	return big.NewInt(0).Mul(div, b), big.NewInt(0).Div(b, g), big.NewInt(0).Div(a, g)
 }

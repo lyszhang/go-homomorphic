@@ -15,8 +15,8 @@ import (
 	"testing"
 )
 
-const NUMBER_LIMIT = 300
-const SET_LIMIT = 20
+const NUMBER_LIMIT = 10000
+const SET_LIMIT = 100
 
 func isInSet(t []int64, n int64) bool {
 	for _, value := range t {
@@ -38,6 +38,7 @@ func randomSet() (t []int64) {
 		}
 		t = append(t, n.Int64())
 	}
+	t = append(t, 8878)
 	return
 }
 
@@ -65,7 +66,7 @@ func TestPSI(t *testing.T) {
 		}
 	}
 
-	Process(AliceSet, BobSet)
+	//Process(AliceSet, BobSet)
 
 	ProcessByGroup(AliceSet, BobSet)
 	fmt.Println("real inter: ", inter)

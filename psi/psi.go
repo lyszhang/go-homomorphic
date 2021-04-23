@@ -47,18 +47,17 @@ func SearchMatchSolutionSet(p poly.Poly, v []int64) []int64 {
 }
 
 // 验证是否为其中的解
-func CheckPolyMatchSolutionNew(p *VectorInt64, s int64) bool {
-	var spow, sum int64
+func CheckPolyMatchSolutionNew(p *VectorBigInt, s int64) bool {
+	spow := big.NewInt(1)
+	sum := big.NewInt(0)
 	for i := 0; i < len(p.Data); i++ {
-		if i == 0 {
-			spow = 1
-		} else {
-			spow = spow * s
+		if i > 0 {
+			spow = big.NewInt(0).Mul(spow, big.NewInt(s))
 		}
-		mul := p.Data[i] * spow
-		sum = sum + mul
+		mul := big.NewInt(0).Mul(p.Data[i], spow)
+		sum = big.NewInt(0).Add(sum, mul)
 	}
-	if sum == 0 {
+	if sum.Cmp(big.NewInt(0)) == 0 {
 		return true
 	}
 	return false
@@ -66,7 +65,7 @@ func CheckPolyMatchSolutionNew(p *VectorInt64, s int64) bool {
 
 const INT64LIMIT = "9223372036854775808"
 
-func CheckPolyMatchSolutionNew2(p *VectorInt64, s int64) bool {
+func CheckPolyMatchSolutionNew2(p *VectorBigInt, s int64) bool {
 	spow := big.NewInt(1)
 	sum := big.NewInt(0)
 	sbig := big.NewInt(s)
@@ -76,7 +75,7 @@ func CheckPolyMatchSolutionNew2(p *VectorInt64, s int64) bool {
 			spow = big.NewInt(0).Mul(spow, sbig)
 		}
 
-		pdbig := big.NewInt(p.Data[i])
+		pdbig := p.Data[i]
 		mulbig := big.NewInt(0).Mul(pdbig, spow)
 		sum = big.NewInt(0).Add(sum, mulbig)
 	}
@@ -90,7 +89,7 @@ func CheckPolyMatchSolutionNew2(p *VectorInt64, s int64) bool {
 	return false
 }
 
-func SearchMatchSolutionSetNew(p *VectorInt64, v []int64) []int64 {
+func SearchMatchSolutionSetNew(p *VectorBigInt, v []int64) []int64 {
 	// 如果是常数式，则肯定没有解
 	if len(p.Data) <= 1 {
 		return nil
