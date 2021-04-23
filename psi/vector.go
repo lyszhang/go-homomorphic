@@ -9,6 +9,7 @@ package psi
 import (
 	"fmt"
 	paillier "github.com/lyszhang/go-go-gadget-paillier"
+	"github.com/lyszhang/go-homomorphic/psi/utils"
 	"math/big"
 )
 
@@ -45,6 +46,15 @@ func NewPolyFromSet(s set) Vector {
 	return IterationN(NewPolyFromSet(s[:length-1]), s[length-1])
 }
 
+func NewPolysFromSet(raw set) []Vector {
+	ss := utils.SplitArray(raw, 5)
+	var vectors []Vector
+	for _, s := range ss {
+		vectors = append(vectors, NewPolyFromSet(s))
+	}
+	return vectors
+}
+
 // string
 func (v *Vector) Print() {
 	fmt.Println(v)
@@ -78,6 +88,14 @@ func (v *Vector) Encrypt(pubKey *paillier.PublicKey) *EncVector {
 	}
 }
 
+func EncryptVectors(ss []Vector, pubKey *paillier.PublicKey) []*EncVector {
+	var encVectors []*EncVector
+	for _, value := range ss {
+		encVectors = append(encVectors, value.Encrypt(pubKey))
+	}
+	return encVectors
+}
+
 type EncVector struct {
 	PubKey    paillier.PublicKey
 	Encrypted [][]byte
@@ -97,6 +115,14 @@ func (v *EncVector) Decrypt(privKey *paillier.PrivateKey) *Vector {
 		tmpValue = append(tmpValue, plainText.Int64())
 	}
 	return &Vector{Data: tmpValue}
+}
+
+func DecryptVectors(ss []*EncVector, privKey *paillier.PrivateKey) []Vector {
+	var vectors []Vector
+	for _, value := range ss {
+		vectors = append(vectors, *value.Decrypt(privKey))
+	}
+	return vectors
 }
 
 // index

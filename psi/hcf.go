@@ -6,7 +6,10 @@
 
 package psi
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/lyszhang/go-homomorphic/psi/utils"
+)
 
 // 存储多项式的阶数
 // 系数排列从低到高
@@ -93,6 +96,7 @@ func (v *VectorInt64) sub(d *VectorInt64) *VectorInt64 {
 // v*d
 // 多项式系数乘上常数
 func (v *VectorInt64) mulConst(d int64, rshift uint) *VectorInt64 {
+	fmt.Println("rshift: ", rshift)
 	tmp := make([]int64, rshift)
 	for i := 0; i < len(v.Data); i++ {
 		tmp = append(tmp, v.Data[i]*d)
@@ -122,13 +126,23 @@ func (v *VectorInt64) divide(d *VectorInt64) (rem, divsor *VectorInt64) {
 	// f阶数大于等于divsor的阶数
 	x := v.largestParameter()
 	y := d.largestParameter()
+	fmt.Println("+++++++++")
+	v.print()
+	d.print()
+	fmt.Println("x, y: ", x, y)
+
+	_, xa, ya := utils.Lcm(x, y)
+	/// 为什么出现负数的情况
+	fmt.Println("xa", xa)
+	fmt.Println("ya", ya)
 
 	// you know why, avoid float missing precision
-	t1 := v.mulConst(y, 0)
-	t2 := d.mulConst(x, 0)
+	t1 := v.mulConst(xa, 0)
+	t2 := d.mulConst(ya, 0)
 
-	fmt.Println("t1: ", t1)
-	fmt.Println("t2: ", t2)
+	/// 为什么出现负数的情况
+	fmt.Println(t1.degree())
+	fmt.Println(t2.degree())
 	t3 := t2.mulConst(1, t1.degree()-t2.degree())
 	rem = t1.sub(t3)
 	rem.reduce()
@@ -159,15 +173,15 @@ func HCF(m, n *VectorInt64) *VectorInt64 {
 			maxV = t2
 			minV = t1
 		}
-		fmt.Println("++++++++++")
+		//fmt.Println("++++++++++")
 		maxV.print()
 		minV.print()
 
 		rem, disvor := maxV.divide(minV)
-		rem.print()
-		disvor.print()
+		//rem.print()
+		//disvor.print()
 		if rem.isZero() {
-			minV.print()
+			//minV.print()
 			return minV
 		}
 

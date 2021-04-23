@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	paillier "github.com/lyszhang/go-go-gadget-paillier"
+	"github.com/lyszhang/go-homomorphic/psi/utils"
 	"github.com/renproject/secp256k1"
 	"github.com/renproject/shamir/eea"
 	"github.com/renproject/shamir/poly"
@@ -79,7 +80,7 @@ func CheckPolyMatchSolutionNew2(p *VectorInt64, s int64) bool {
 		mulbig := big.NewInt(0).Mul(pdbig, spow)
 		sum = big.NewInt(0).Add(sum, mulbig)
 	}
-	fmt.Println("sum: ", sum)
+	//fmt.Println("sum: ", sum)
 	int64Limit, _ := big.NewInt(0).SetString(INT64LIMIT, 10)
 	rem := big.NewInt(0).Mod(sum, int64Limit)
 	if big.NewInt(0).Cmp(rem) == 0 {
@@ -90,7 +91,10 @@ func CheckPolyMatchSolutionNew2(p *VectorInt64, s int64) bool {
 }
 
 func SearchMatchSolutionSetNew(p *VectorInt64, v []int64) []int64 {
-	p.print()
+	// 如果是常数式，则肯定没有解
+	if len(p.Data) <= 1 {
+		return nil
+	}
 	var inter []int64
 	for _, value := range v {
 		neg := int64(0 - value)
@@ -120,8 +124,8 @@ func Process(aliceSet, bobSet []int64) {
 
 	AliceVector := NewPolyFromSet(aliceSet)
 	BobVector := NewPolyFromSet(bobSet)
-	AliceVector.Print()
-	BobVector.Print()
+	//AliceVector.Print()
+	//BobVector.Print()
 
 	// encrypt
 	encALice := AliceVector.Encrypt(&privKey.PublicKey)
@@ -138,7 +142,7 @@ func Process(aliceSet, bobSet []int64) {
 
 	// 公因式
 	a := NewFromVectorInt(&AliceVector)
-	b := NewFromVectorInt(&BobVector)
+	b := NewFromVectorInt(finalVector)
 	poly := HCF(a, b)
 
 	inter := SearchMatchSolutionSetNew(poly, aliceSet)
@@ -165,9 +169,59 @@ func ProcessPoly() {
 	a := newPoly(AliceVector)
 	b := newPoly(BobVector)
 
-	fmt.Println(a.String())
-	fmt.Println(b.String())
+	//fmt.Println(a.String())
+	//fmt.Println(b.String())
 
 	eea.Trial(a, b)
 
+}
+
+// 5个元素为1组，一一求并集
+func ProcessByGroup(aliceSet, bobSet []int64) {
+	// Generate a 128-bit private key.
+	privKey, err := paillier.GenerateKey(rand.Reader, 128)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	AliceVectors := NewPolysFromSet(aliceSet)
+	BobVectors := NewPolysFromSet(bobSet)
+	fmt.Println("AliceVectors: ", AliceVectors)
+	fmt.Println("BobVectors: ", BobVectors)
+
+	// encrypt
+	encALice := EncryptVectors(AliceVectors, &privKey.PublicKey)
+	encBob := EncryptVectors(BobVectors, &privKey.PublicKey)
+
+	// E(f*r+g)
+	///TODO: 验证有效性
+	var encVectors []*EncVector
+	for _, vectorAlice := range encALice {
+		for _, vectorBoob := range encBob {
+			vectorTmp := *vectorAlice
+
+			vectorTmp.Mul(&RandVector, &privKey.PublicKey)
+			vectorTmp.Add(vectorBoob, &privKey.PublicKey)
+			encVectors = append(encVectors, &vectorTmp)
+		}
+	}
+
+	// decrypt
+	//finalVectors := DecryptVectors(encVectors, privKey)
+
+	// 公因式
+	ss := utils.SplitArray(aliceSet, 5)
+	var inter []int64
+	for i, vectA := range AliceVectors {
+		for _, vectF := range BobVectors {
+			a := NewFromVectorInt(&vectA)
+			b := NewFromVectorInt(&vectF)
+			poly := HCF(a, b)
+
+			inter = append(inter, SearchMatchSolutionSetNew(poly, ss[i])...)
+
+		}
+	}
+	fmt.Println("intersection:", inter)
 }
