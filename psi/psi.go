@@ -11,40 +11,8 @@ import (
 	"fmt"
 	paillier "github.com/lyszhang/go-go-gadget-paillier"
 	"github.com/lyszhang/go-homomorphic/psi/utils"
-	"github.com/renproject/secp256k1"
-	"github.com/renproject/shamir/eea"
-	"github.com/renproject/shamir/poly"
 	"math/big"
 )
-
-// 验证是否为其中的解
-func CheckPolyMatchSolution(p poly.Poly, s int64) bool {
-	var spow, sum int64
-	for i := 0; i < len(p); i++ {
-		if i == 0 {
-			spow = 1
-		} else {
-			spow = spow * s
-		}
-		sum += p[i].Int().Int64() * spow
-	}
-	if sum == 0 {
-		return true
-	}
-	return false
-}
-
-func SearchMatchSolutionSet(p poly.Poly, v []int64) []int64 {
-	var inter []int64
-	for _, value := range v {
-		neg := 0 - value
-		fmt.Println("neg: ", neg)
-		if CheckPolyMatchSolution(p, neg) == true {
-			inter = append(inter, value)
-		}
-	}
-	return inter
-}
 
 // 验证是否为其中的解
 func CheckPolyMatchSolutionNew(p *VectorBigInt, s int64) bool {
@@ -104,15 +72,6 @@ func SearchMatchSolutionSetNew(p *VectorBigInt, v []int64) []int64 {
 	return inter
 }
 
-// 生成poly形式的多项式
-func newPolyFromVector(v *Vector) poly.Poly {
-	var fns []secp256k1.Fn
-	for _, value := range v.Data {
-		fns = append(fns, secp256k1.NewFnFromU32(uint32(value)))
-	}
-	return poly.NewFromSlice(fns)
-}
-
 func Process(aliceSet, bobSet []int64) {
 	// Generate a 128-bit private key.
 	privKey, err := paillier.GenerateKey(rand.Reader, 128)
@@ -146,33 +105,6 @@ func Process(aliceSet, bobSet []int64) {
 
 	inter := SearchMatchSolutionSetNew(poly, aliceSet)
 	fmt.Println("intersection:", inter)
-}
-
-func newPoly(v Vector) poly.Poly {
-	var fn []secp256k1.Fn
-	for _, value := range v.Data {
-		fn = append(fn, secp256k1.NewFnFromU16(uint16(value)))
-	}
-	return poly.NewFromSlice(fn)
-}
-
-func ProcessPoly() {
-	// 集合
-	AliceVector := NewPolyFromSet([]int64{1, 2, 3, 7})
-	BobVector := NewPolyFromSet([]int64{1, 2, 4, 5, 8})
-
-	// 公因式
-	// 有个限制, a的degree需要小于b的degree, 否则会报错
-	// (x+1)(x+2)(x+3)
-	// (x+1)(x+2)(x+4)
-	a := newPoly(AliceVector)
-	b := newPoly(BobVector)
-
-	//fmt.Println(a.String())
-	//fmt.Println(b.String())
-
-	eea.Trial(a, b)
-
 }
 
 // 5个元素为1组，一一求并集

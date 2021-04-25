@@ -9,8 +9,6 @@ package psi
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/renproject/secp256k1"
-	"github.com/renproject/shamir/poly"
 	"math/big"
 	"testing"
 )
@@ -102,12 +100,6 @@ func TestPSINew(t *testing.T) {
 
 }
 
-func TestCheckPolyMatchSolution(t *testing.T) {
-	p := poly.NewFromSlice([]secp256k1.Fn{secp256k1.NewFnFromU16(6),
-		secp256k1.NewFnFromU16(11), secp256k1.NewFnFromU16(6), secp256k1.NewFnFromU16(1)})
-	fmt.Println(CheckPolyMatchSolution(p, -4))
-}
-
 func TestCheckPolyMatchSolutionNew2(t *testing.T) {
 	//AliceSet := []int64{1, 2, 3, 6, 8, 34, 39, 99, 2349, 23488734, 2359544389060, 2394932905909045, 23958804856}
 	AliceSet := []int64{1, 2, 3, 6, 8, 34, 39, 99, 2349, 23488734, 2359544389060}
@@ -115,10 +107,6 @@ func TestCheckPolyMatchSolutionNew2(t *testing.T) {
 	a := NewFromVectorInt(&AliceVector)
 	a.print()
 	fmt.Println(CheckPolyMatchSolutionNew2(a, -2))
-}
-
-func TestProcessPoly(t *testing.T) {
-	ProcessPoly()
 }
 
 func TestBigInt(t *testing.T) {
