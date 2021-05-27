@@ -80,8 +80,8 @@ func TestPSINew(t *testing.T) {
 
 	//AliceSet := randomSet()
 	//BobSet := randomSet()
-	AliceSet := []int64{20, 53, 41, 216, 286}
-	BobSet := []int64{268, 77, 138, 191, 82}
+	AliceSet := []int64{20, 53, 41, 34, 216, 286}
+	BobSet := []int64{268, 77, 34, 138, 191, 82}
 
 	fmt.Println("AliceSet: ", AliceSet)
 	fmt.Println("BobSet: ", BobSet)
