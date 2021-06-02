@@ -11,6 +11,7 @@ import (
 	paillier "github.com/lyszhang/go-go-gadget-paillier"
 	"github.com/lyszhang/go-homomorphic/psi/utils"
 	"math/big"
+	"sync"
 )
 
 type Vector struct {
@@ -72,18 +73,23 @@ func (v *Vector) Value(i int) int64 {
 
 // 加密
 func (v *Vector) Encrypt(pubKey *paillier.PublicKey) *EncVector {
-	tmpEnc := make([][]byte, 0)
-	for _, value := range v.Data {
-		mValue := new(big.Int).SetInt64(value)
-
-		///TODO: big int负数问题
-		eValue, err := paillier.Encrypt(pubKey, mValue.Bytes())
-		if err != nil {
-			fmt.Println(err)
-			panic(nil)
-		}
-		tmpEnc = append(tmpEnc, eValue)
+	tmpEnc := make([][]byte, len(v.Data))
+	wg := sync.WaitGroup{}
+	wg.Add(len(v.Data))
+	for i, value := range v.Data {
+		go func(i int, value int64) {
+			mValue := new(big.Int).SetInt64(value)
+			///TODO: big int负数问题
+			eValue, err := paillier.Encrypt(pubKey, mValue.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				panic(nil)
+			}
+			tmpEnc[i] = eValue
+			wg.Done()
+		}(i, value)
 	}
+	wg.Wait()
 	return &EncVector{
 		PubKey:    *pubKey,
 		Encrypted: tmpEnc,
@@ -91,10 +97,16 @@ func (v *Vector) Encrypt(pubKey *paillier.PublicKey) *EncVector {
 }
 
 func EncryptVectors(ss []Vector, pubKey *paillier.PublicKey) []*EncVector {
-	var encVectors []*EncVector
-	for _, value := range ss {
-		encVectors = append(encVectors, value.Encrypt(pubKey))
+	encVectors := make([]*EncVector, len(ss))
+	wg := sync.WaitGroup{}
+	wg.Add(len(ss))
+	for i, value := range ss {
+		go func(i int, value Vector) {
+			encVectors[i] = value.Encrypt(pubKey)
+			wg.Done()
+		}(i, value)
 	}
+	wg.Wait()
 	return encVectors
 }
 
@@ -106,24 +118,36 @@ type EncVector struct {
 // 解密
 func (v *EncVector) Decrypt(privKey *paillier.PrivateKey) *Vector {
 	// Decrypt.
-	tmpValue := make([]int64, 0)
-	for _, value := range v.Encrypted {
-		d, err := paillier.Decrypt(privKey, value)
-		if err != nil {
-			fmt.Println(err)
-			return nil
-		}
-		plainText := new(big.Int).SetBytes(d)
-		tmpValue = append(tmpValue, plainText.Int64())
+	tmpValue := make([]int64, len(v.Encrypted))
+	wg := sync.WaitGroup{}
+	wg.Add(len(v.Encrypted))
+	for i, value := range v.Encrypted {
+		go func(i int, value []byte) {
+			d, err := paillier.Decrypt(privKey, value)
+			if err != nil {
+				fmt.Println(err)
+				panic(err)
+			}
+			plainText := new(big.Int).SetBytes(d)
+			tmpValue[i] = plainText.Int64()
+			wg.Done()
+		}(i, value)
 	}
+	wg.Wait()
 	return &Vector{Data: tmpValue}
 }
 
 func DecryptVectors(ss []*EncVector, privKey *paillier.PrivateKey) []Vector {
-	var vectors []Vector
-	for _, value := range ss {
-		vectors = append(vectors, *value.Decrypt(privKey))
+	vectors := make([]Vector, len(ss))
+	wg := sync.WaitGroup{}
+	wg.Add(len(ss))
+	for i, value := range ss {
+		go func(i int, value *EncVector) {
+			vectors[i] = *value.Decrypt(privKey)
+			wg.Done()
+		}(i, value)
 	}
+	wg.Wait()
 	return vectors
 }
 
