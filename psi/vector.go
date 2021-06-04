@@ -47,7 +47,7 @@ func NewPolyFromSet(s set) Vector {
 	return IterationN(NewPolyFromSet(s[:length-1]), s[length-1])
 }
 
-const LengthLimit = 3
+const LengthLimit = 2
 
 func NewPolysFromSet(raw set) []Vector {
 	ss := utils.SplitArray(raw, LengthLimit)
